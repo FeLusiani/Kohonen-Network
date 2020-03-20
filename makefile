@@ -3,7 +3,8 @@
 # Compiler and flags
 CC		= gcc
 CFLAGS	= -Wall -Wextra -std=gnu99
-ALLEG_FLAGS = -lallegro -lallegro_primitives -lallegro_font -lallegro_ttf
+ALLEG_FLAGS = -lallegro -lallegro_primitives -lallegro_font -lallegro_ttf -lallegro_image
+
 # Directories
 BINDIR	= bin
 SRCDIR	= src
@@ -26,7 +27,7 @@ UTILS_OBJ = $(addsuffix .o, $(addprefix $(OBJDIR)/,$(UTILS)))
 
 # Build generic .o file from .c file
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(HDRDIR)/*.h $(CONFDIR)/*.h
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ -I$(CONFDIR)
 
 # Build generic executable
 $(BINDIR)/%: $(OBJDIR)/%.o $(UTILS_OBJ) $(HDRDIR)/*.h $(CONFDIR)/*.h
