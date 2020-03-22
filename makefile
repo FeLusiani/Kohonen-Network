@@ -2,7 +2,7 @@
 
 # Compiler and flags
 CC		= gcc
-CFLAGS	= -Wall -Wextra -std=gnu99
+CFLAGS	= -Wall -Wextra -std=gnu99 -lm
 ALLEG_FLAGS = -lallegro -lallegro_primitives -lallegro_font -lallegro_ttf -lallegro_image
 
 # Directories
@@ -14,7 +14,7 @@ CONFDIR	= conf
 
 # Files
 EXECUTABLE	= main
-UTILS		=
+UTILS		= kohoen_network
 
 
 ### MAKEFILE EXECUTION
@@ -32,7 +32,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c $(HDRDIR)/*.h $(CONFDIR)/*.h
 # Build generic executable
 $(BINDIR)/%: $(OBJDIR)/%.o $(UTILS_OBJ) $(HDRDIR)/*.h $(CONFDIR)/*.h
 	@echo "🚧 Building..."
-	$(CC) -o $@ $(filter %.o,$^) $(ALLEG_FLAGS)
+	$(CC) -o $@ $(filter %.o,$^) $(CFLAGS) $(ALLEG_FLAGS)
 
 
 
