@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_font.h>
+#include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
 
@@ -11,6 +12,10 @@
 #define MAX_IPOINTS 700
 float input_points[MAX_IPOINTS][2]; // 2 --> x and y of each point
 int i_p_count = 0; //input points counter
+
+void print_info(ALLEGRO_FONT* font, ALLEGRO_COLOR c, int line_n, const char* string){
+	al_draw_text(font, c, 2*p_off_w+graph_w, p_off_h+line_n*font_size, 0, string);
+}
 
 // 0 if point is outside of graph boundaries
 bool inside_graph(float _x, float _y){
@@ -36,10 +41,8 @@ void add_input_point_cloud(float _x, float _y, float _r, int n){
 }
 
 void del_input_point(){
-	if (i_p_count == 0){
-		// printf("No input points to delete\n");
+	if (i_p_count == 0)
 		return;
-	}
 	i_p_count --;
 }
 
@@ -79,11 +82,36 @@ void display_weights(int map_size, int graph_x, int graph_y, int size, ALLEGRO_C
 			vertex_2[1] += graph_y - size;
 			al_draw_line(vertex[0], vertex[1], vertex_2[0], vertex_2[1], c, 0.5);
 		}
-
-
 	}
+}
 
+// KOHOEN NETWORK
+int map_size = MAP_SIZE;
+float learn_decay = 0.999;
+float radius_decay = 0.95;
+float max_radius = MAP_SIZE / 2;
+float min_radius = 0.9;
+enum w_distribution w_d = GRID_WD;
+void initialize_kohoen_net(){
+	set_weight_range(10,graph_h-10);
+	set_learning_range(0.1,0);
+	set_learn_decay(learn_decay);
+	set_radius_range(max_radius, min_radius);
+	set_radius_decay(radius_decay);
+	init_net(2, map_size, GRID_WD);
+}
 
+void load_training_set(){
+	init_ts(i_p_count);
+	for (int i=0; i<i_p_count; i++)
+		set_example(i, input_points[i]);
+}
+
+void reset(){
+	delete_ts();
+	delete_net();
+	initialize_kohoen_net();
+	load_training_set();
 }
 
 void move_input_points(float dx, float dy){
@@ -114,15 +142,11 @@ void handle_event(ALLEGRO_EVENT event){
 	{
 		case ALLEGRO_EVENT_TIMER:
 			if(keys[ALLEGRO_KEY_ESCAPE] & KEY_PRESSED) done = true;
-			if(keys[ALLEGRO_KEY_T] & KEY_DOWN) train = true;
-			if(keys[ALLEGRO_KEY_L] & KEY_PRESSED){
-				init_ts(i_p_count, 2);
-				for (int i=0; i<i_p_count; i++)
-					set_example(i, input_points[i]);
-			}
+			if(keys[ALLEGRO_KEY_T] & KEY_DOWN) train = true; // TRAIN
+			if(keys[ALLEGRO_KEY_L] & KEY_PRESSED) load_training_set();
+			if(keys[ALLEGRO_KEY_R] & KEY_PRESSED) reset();
 
-			if(keys[ALLEGRO_KEY_A] & KEY_PRESSED) learn_ts(1);
-
+			if(keys[ALLEGRO_KEY_A] & KEY_PRESSED) learn_ts(1); // TRAIN (1 STEP)
 			if(keys[ALLEGRO_KEY_UP]	& KEY_DOWN) move_input_points(0, -3);
 			if(keys[ALLEGRO_KEY_RIGHT] & KEY_DOWN) move_input_points(3, 0);
 			if(keys[ALLEGRO_KEY_DOWN] & KEY_DOWN) move_input_points(0, 3);
@@ -176,20 +200,20 @@ void handle_event(ALLEGRO_EVENT event){
 
 int main()
 {
-    // sistemi
+    // allegro stuff init
     assert_init(al_init(), "allegro");
-    assert_init(al_init_primitives_addon(), "primitives");
+	assert_init(al_init_font_addon(), "font addon");
+	assert_init(al_init_ttf_addon(), "ttf addon");
+    assert_init(al_init_primitives_addon(), "primitives addon");
     assert_init(al_init_image_addon(), "image addon");
     assert_init(al_install_keyboard(), "keyboard");
     assert_init(al_install_mouse(), "mouse");
-
     // timer
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
     assert_init(timer, "timer");
     // event queue
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     assert_init(queue, "queue");
-
     // display
     al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
     al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
@@ -197,12 +221,8 @@ int main()
     ALLEGRO_DISPLAY* disp = al_create_display(disp_w, disp_h);
     assert_init(disp, "display");
     // font
-    ALLEGRO_FONT* font = al_create_builtin_font();
-    assert_init(font, "font");
-
-    // images
-    ALLEGRO_BITMAP* mysha = al_load_bitmap("img/mysha.png");
-    assert_init(mysha, "mysha");
+    ALLEGRO_FONT* font = al_load_ttf_font("font/UbuntuMono-R.ttf", font_size, 0);
+	assert_init(font, "font");
 
     // events
     al_register_event_source(queue, al_get_keyboard_event_source());
@@ -210,17 +230,10 @@ int main()
     al_register_event_source(queue, al_get_timer_event_source(timer));
     al_register_event_source(queue, al_get_mouse_event_source());
 
-	// KOHOEN NETWORK
-	int map_size = MAP_SIZE;
-	set_weight_range(10,graph_h-10);
-	set_learning_range(0.1,0);
-	set_learn_decay(0.95);
-	set_radius_range(map_size / 2, 1);
-	set_radius_decay(0.95);
-	init_net(2, map_size, RANDOM_WD);
+	initialize_kohoen_net();
 
+	// infinite loop
     ALLEGRO_EVENT event;
-
     al_start_timer(timer);
     while(1)
     {
@@ -228,17 +241,47 @@ int main()
 		handle_event(event);
         if(done)
             break;
-
         if(redraw && al_is_event_queue_empty(queue))
         {
             al_clear_to_color(color_backg);
 			al_draw_filled_rectangle(p_off_w, p_off_h, p_off_w+graph_w, p_off_h+graph_h, color_black);
-			display_input_points(p_off_w, p_off_h, 6, color_accent);
 			display_weights(map_size, p_off_w, p_off_h, 4, color_accent2);
+			display_input_points(p_off_w, p_off_h, 6, color_accent);
+			// testo
+			int line = 0;
+			char tmp[100];
+			sprintf(tmp, "FIXED VALUES:");
+			print_info(font, color_text2, line++, tmp);
+			sprintf(tmp, "Learning rate decay = %.2f", learn_decay);
+			print_info(font, color_text, line++, tmp);
+			sprintf(tmp, "Radius decay = %.2f", radius_decay);
+			print_info(font, color_text, line++, tmp);
+			sprintf(tmp, "DYNAMIC VALUES:");
+			print_info(font, color_text3, line++, tmp);
+			sprintf(tmp, "Learning rate = %.2f", get_learning_rate());
+			print_info(font, color_text, line++, tmp);
+			sprintf(tmp, "Radius = %.2f", get_radius());
+			print_info(font, color_text, line++, tmp);
+			line++; // "line break"
+			sprintf(tmp, "CONTROLS");
+			print_info(font, color_accent2, line++, tmp);
+			sprintf(tmp, "Click or drag the mouse");
+			print_info(font, color_accent, line++, tmp);
+			sprintf(tmp, "to create input elements");
+			print_info(font, color_accent, line++, tmp);
+			sprintf(tmp, "D -> delete input elements");
+			print_info(font, color_text, line++, tmp);
+			sprintf(tmp, "L -> load input elements as training set");
+			print_info(font, color_text, line++, tmp);
+			sprintf(tmp, "T -> train the net 1 epoch per frame");
+			print_info(font, color_text, line++, tmp);
+			sprintf(tmp, "A -> train the net once (1 epoch)");
+			print_info(font, color_text, line++, tmp);
+			sprintf(tmp, "R -> reset the net");
+			print_info(font, color_text, line++, tmp);
+
 
             al_flip_display();
-            fflush(stdout);
-
             redraw = false;
         }
 
@@ -250,7 +293,6 @@ int main()
 
 	delete_ts();
 	delete_net();
-    al_destroy_bitmap(mysha);
     al_destroy_font(font);
     al_destroy_display(disp);
     al_destroy_timer(timer);

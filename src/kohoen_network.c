@@ -6,17 +6,6 @@
 
 #include "include/kohoen_network.h"
 
-// #define MAXEXE 100 // max # of examples in TS
-// #define MAXINP 100 // max # of input  units
-// #define MAXOUT 100 // max # of output units
-#define LINE 1 // line topology
-#define RING 2 // ring topology
-#define GRID 3 // grid topology
-#define MESH 4 // mesh topology
-
-
-
-
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
@@ -27,19 +16,14 @@ struct out_unit {
 };
 
 static out_unit map[MAP_SIZE][MAP_SIZE];
-
-// static float ts[MAXEXE][MAXINP]; // training examples
-// static float kw[MAXOUT][MAXINP]; // output weights
-// static float ki[MAXINP]; // input vector
-// static float ko[MAXOUT]; // output vector
 static float** ts; // training examples [n_examples][input_dim]
 static float* ki; // input vector [input_dim]
 static int input_dim; // number of input units
 // static out_unit** map; // vector 2D of out_units
-static int map_size; // width and heigth of map (is square)
+static int map_size = 0; // width and heigth of map (is square)
 
 // static int topology; // output map topology
-static int nex; // number of examples
+static int nex = 0; // number of examples
 static float k_radius; // current neighborhood radius
 static float k_r_ini, k_r_fin; // initial, final radius
 static float k_r_norm; // normal. radius in [0,1]
@@ -93,6 +77,11 @@ float get_radius(){
     return k_radius;
 }
 
+float get_norm_radius(){
+    return k_r_norm;
+}
+
+
 float get_learning_rate(){
     return k_alpha;
 }
@@ -105,12 +94,11 @@ float get_input(int i){
     return ki[i];
 }
 
-void init_ts(int n_examples, int input_size){
+void init_ts(int n_examples){
 	nex = n_examples;
-	input_dim = input_size;
 	ts = (float**) malloc(nex*sizeof(float*));
 	for (int i=0; i<nex; i++)
-		ts[i] = (float*) malloc(input_size*sizeof(float));
+		ts[i] = (float*) malloc(input_dim*sizeof(float));
 }
 
 void set_example(int k, float* v){
@@ -121,6 +109,7 @@ void delete_ts(){
 	for (int i=0; i<nex; i++)
 		free(ts[i]);
 	free(ts);
+	nex = 0;
 }
 
 void init_net(int ni, int map_s, enum w_distribution w_d){
@@ -160,6 +149,8 @@ void delete_net(){
 	    	free(map[i][j].w);
 
 	// free(map);
+	map_size = 0;
+	input_dim = 0;
 }
 
 void set_input(float *v){
@@ -216,7 +207,11 @@ void update_weights(int win_x, int win_y)
 	for (int i=rmin_x; i<rmax_x; i++)
 	for (int j=rmin_y; j<rmax_y; j++){
 		dist2 = (win_x-i)*(win_x-i) + (win_y-j)*(win_y-j); // sqr dist in the topology (grid)
-		phi = exp(-1.5*dist2 / r2); // dist = 0 -> phi=1, dist = radius -> phi ~= 0.2
+		if (dist2 > r2) continue;
+		if (r2 == 0)
+			phi = 1;
+		else
+			phi = exp(-1.5*dist2 / r2); // dist = 0 -> phi=1, dist = radius -> phi ~= 0.2
 		for (int z=0; z<input_dim; z++)
 			map[i][j].w[z] += phi*k_alpha*(ki[z]-map[i][j].w[z]);
 	}
