@@ -7,8 +7,9 @@
 #define color_black al_map_rgb(0, 0, 0) // black
 #define font_size 20
 #define disp_w 1000
-#define disp_h 600
+#define disp_h 700
 #define p_off_w 30
 #define p_off_h 30
 #define graph_w 500
 #define graph_h 500
+#define u_matrix_size 300

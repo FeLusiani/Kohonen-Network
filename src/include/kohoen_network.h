@@ -1,5 +1,3 @@
-#define MAP_SIZE 10
-
 enum w_distribution{RANDOM_WD, GRID_WD};
 
 float* get_example(int k);

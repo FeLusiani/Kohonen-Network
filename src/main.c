@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>
@@ -7,14 +8,17 @@
 #include <allegro5/allegro_primitives.h>
 
 #include "display_settings.h"
+#include "KN_settings.h"
 #include "include/kohoen_network.h"
 
 #define MAX_IPOINTS 700
 float input_points[MAX_IPOINTS][2]; // 2 --> x and y of each point
 int i_p_count = 0; //input points counter
 
-void print_info(ALLEGRO_FONT* font, ALLEGRO_COLOR c, int line_n, const char* string){
+// returns position at which it printed the info
+float print_info(ALLEGRO_FONT* font, ALLEGRO_COLOR c, int line_n, const char* string){
 	al_draw_text(font, c, 2*p_off_w+graph_w, p_off_h+line_n*font_size, 0, string);
+	return p_off_h+line_n*font_size;
 }
 
 // 0 if point is outside of graph boundaries
@@ -57,8 +61,8 @@ void display_input_points(int graph_x, int graph_y, int size, ALLEGRO_COLOR c){
 }
 
 void display_weights(int map_size, int graph_x, int graph_y, int size, ALLEGRO_COLOR c){
-	float vertex[2];
-	float vertex_2[2];
+	float vertex[2]; // tmp vector for weight
+	float vertex_2[2]; // tmp vector for weight connected to the previous one
 	for (int i=0; i<map_size; i++)
 	for (int j=0; j<map_size; j++){
 		// if (!inside_graph(input_points[i][0], input_points[i][1])) continue;
@@ -85,20 +89,64 @@ void display_weights(int map_size, int graph_x, int graph_y, int size, ALLEGRO_C
 	}
 }
 
+void draw_u_matrix(int map_size, int max_dist, int matrix_x, int matrix_y, int cell_size){
+	float vertex[2]; // tmp vector for weight
+	float vertex_2[2]; // tmp vector for weight connected to the previous one
+	float cell_x; // tmp var for x of cell to draw
+	float cell_y; // tmp var for y of cell to draw
+	float dist; // tmp var
+	ALLEGRO_COLOR c; //tmp var
+
+	c = al_map_rgb(250,250,250);
+	// draw frame of matrix
+	al_draw_rectangle(matrix_x, matrix_y,
+					  matrix_x+(map_size+2)*cell_size,
+					  matrix_y+(map_size+2)*cell_size,
+					  c, cell_size);
+	matrix_x += cell_size;
+	matrix_y += cell_size;
+	for (int i=0; i<map_size; i++)
+	for (int j=0; j<map_size; j++){
+		get_weights(i, j, &vertex[0]);
+		cell_x = matrix_x + j*cell_size;
+		cell_y = matrix_y + i*cell_size;
+
+		// draw cell representing distance to the next output unit going right in the grid
+		cell_x += cell_size;
+		if (j != map_size-1){
+			get_weights(i, j+1, &vertex_2[0]);
+			dist = 0;
+			dist += (vertex[0] - vertex_2[0])*(vertex[0] - vertex_2[0]);
+			dist += (vertex[1] - vertex_2[1])*(vertex[1] - vertex_2[1]);
+			dist = sqrt(dist) * 255 / max_dist;
+			c = al_map_rgb(dist, dist, dist);
+			al_draw_filled_rectangle(cell_x, cell_y, cell_x+cell_size, cell_y+cell_size, c);
+		}
+
+		// draw cell representing distance to the next output unit going down in the grid
+		cell_x -= cell_size;
+		cell_y += cell_size;
+		if (i != map_size-1){
+			get_weights(i+1, j, &vertex_2[0]);
+			dist = 0;
+			dist += (vertex[0] - vertex_2[0])*(vertex[0] - vertex_2[0]);
+			dist += (vertex[1] - vertex_2[1])*(vertex[1] - vertex_2[1]);
+			dist = sqrt(dist) * 255 / max_dist;
+			c = al_map_rgb(dist, dist, dist);
+			al_draw_filled_rectangle(cell_x, cell_y, cell_x+cell_size, cell_y+cell_size, c);
+		}
+	}
+}
+
 // KOHOEN NETWORK
 int map_size = MAP_SIZE;
-float learn_decay = 0.999;
-float radius_decay = 0.95;
-float max_radius = MAP_SIZE / 2;
-float min_radius = 0.9;
-enum w_distribution w_d = GRID_WD;
 void initialize_kohoen_net(){
 	set_weight_range(10,graph_h-10);
 	set_learning_range(0.1,0);
-	set_learn_decay(learn_decay);
-	set_radius_range(max_radius, min_radius);
-	set_radius_decay(radius_decay);
-	init_net(2, map_size, GRID_WD);
+	set_learn_decay(LEARN_DECAY);
+	set_radius_range(MAX_RADIUS, MIN_RADIUS);
+	set_radius_decay(RADIUS_DECAY);
+	init_net(2, map_size, (enum w_distribution)WEIGHT_DISTRIBUTION);
 }
 
 void load_training_set(){
@@ -112,13 +160,6 @@ void reset(){
 	delete_net();
 	initialize_kohoen_net();
 	load_training_set();
-}
-
-void move_input_points(float dx, float dy){
-	for (int i=0; i<i_p_count; i++){
-		input_points[i][0] += dx;
-		input_points[i][1] += dy;
-	}
 }
 
 void assert_init(bool test, const char *description)
@@ -147,10 +188,6 @@ void handle_event(ALLEGRO_EVENT event){
 			if(keys[ALLEGRO_KEY_R] & KEY_PRESSED) reset();
 
 			if(keys[ALLEGRO_KEY_A] & KEY_PRESSED) learn_ts(1); // TRAIN (1 STEP)
-			if(keys[ALLEGRO_KEY_UP]	& KEY_DOWN) move_input_points(0, -3);
-			if(keys[ALLEGRO_KEY_RIGHT] & KEY_DOWN) move_input_points(3, 0);
-			if(keys[ALLEGRO_KEY_DOWN] & KEY_DOWN) move_input_points(0, 3);
-			if(keys[ALLEGRO_KEY_LEFT] & KEY_DOWN) move_input_points(-3, 0);
 
 			if(keys[ALLEGRO_KEY_D] & (KEY_PRESSED | KEY_DOWN)) del_input_point();
 
@@ -252,9 +289,9 @@ int main()
 			char tmp[100];
 			sprintf(tmp, "FIXED VALUES:");
 			print_info(font, color_text2, line++, tmp);
-			sprintf(tmp, "Learning rate decay = %.2f", learn_decay);
+			sprintf(tmp, "Learning rate decay = %.2f", LEARN_DECAY);
 			print_info(font, color_text, line++, tmp);
-			sprintf(tmp, "Radius decay = %.2f", radius_decay);
+			sprintf(tmp, "Radius decay = %.2f", RADIUS_DECAY);
 			print_info(font, color_text, line++, tmp);
 			sprintf(tmp, "DYNAMIC VALUES:");
 			print_info(font, color_text3, line++, tmp);
@@ -279,7 +316,12 @@ int main()
 			print_info(font, color_text, line++, tmp);
 			sprintf(tmp, "R -> reset the net");
 			print_info(font, color_text, line++, tmp);
+			line++; // "line break"
+			sprintf(tmp, "˅˅˅˅˅ U-MATRIX ˅˅˅˅˅");
+			float pos_y = print_info(font, color_accent2, line++, tmp);
 
+			int cell_size = u_matrix_size / (map_size+2);
+			draw_u_matrix(map_size, U_M_FACTOR*graph_h / map_size, 2*p_off_w+graph_w, pos_y+font_size*2, cell_size);
 
             al_flip_display();
             redraw = false;
