@@ -2,8 +2,8 @@
 
 # Compiler and flags
 CC		= gcc
-CFLAGS	= -Wall -Wextra -std=gnu99 -lm
-ALLEG_FLAGS = -lallegro -lallegro_primitives -lallegro_font -lallegro_ttf -lallegro_image
+CFLAGS		= -Wall -Wextra -std=gnu99 -lm
+ALLEG_FLAGS 	= -lallegro -lallegro_primitives -lallegro_font -lallegro_ttf -lallegro_image
 
 # Directories
 BINDIR	= bin
@@ -21,8 +21,7 @@ UTILS		= kohoen_network
 
 # utils objects
 UTILS_OBJ = $(addsuffix .o, $(addprefix $(OBJDIR)/,$(UTILS)))
-
-.SECONDARY: $(OBJS) # altrimenti vengono considerati files intermedi e cancellati da make
+.SECONDARY: $(UTILS_OBJ) # otherwise they are considered as intermediary files and deleted at the end
 
 
 # Build generic .o file from .c file
