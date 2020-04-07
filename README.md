@@ -54,7 +54,7 @@ and "optional" ones:
 sudo apt-get install -y cmake g++ freeglut3-dev libxcursor-dev libpng-dev libjpeg-dev libfreetype6-dev libgtk2.0-dev libasound2-dev libpulse-dev libopenal-dev libflac-dev libdumb1-dev libvorbis-dev libphysfs-dev
 ```
 
-From the Autoparking directory, clone the Allegro5 git repository:
+From the Kohonen-Network directory, clone the Allegro5 git repository:
 ```
 git clone https://github.com/liballeg/allegro5.git
 ```
