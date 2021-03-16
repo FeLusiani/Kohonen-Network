@@ -1,9 +1,9 @@
 ### MAKEFILE CONFIGURATION
 
 # Compiler and flags
-CC		= gcc
-CFLAGS		= -Wall -Wextra -std=gnu99 -lm
-ALLEG_FLAGS 	= -lallegro -lallegro_primitives -lallegro_font -lallegro_ttf -lallegro_image
+CC 			= gcc
+CFLAGS 		= -Wall -Wextra -std=gnu99 -lm
+ALLEG_FLAGS = -lallegro -lallegro_primitives -lallegro_font -lallegro_ttf -lallegro_image
 
 # Directories
 BINDIR	= bin
