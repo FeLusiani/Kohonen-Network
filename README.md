@@ -1,7 +1,7 @@
 # Kohonen-Network
 
-The projects aims to implement an interactive **Kohoen Network**, a type of **SOM** (Self Organizing Map). Through the GUI the user can insert data, and visualize the network as it learns.  
-Kohoen Networks are usually used to perform dimension reduction and normalization on data. In this project, the network maps a 2D input on a grid topology of nodes (therefore, it performs no dimension reduction, just data normalization).
+The projects aims to implement an interactive **Kohoen Network**, a type of **SOM** ([Self Organizing Map](https://en.wikipedia.org/wiki/Self-organizing_map)). Through the GUI the user can insert data, and visualize the network as it learns.  
+Kohoen Networks are usually used to perform dimensionality reduction and normalization on data. In this project, the network maps a 2D input on a grid topology of nodes (therefore, it performs no dimensionality reduction, just data normalization).
 
 User draws data distribution (purple dots):  
 <img src="img/img_before.png" width="75%" height="75%">
@@ -25,6 +25,7 @@ After training:
 **makefile** -> just a makefile  
 **README** -> this file  
 **src** -> contains the source code files  
+**report** -> contains an in-depth report on the project.
 
 ## Installation
 
