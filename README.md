@@ -1,7 +1,5 @@
 # Project presentation
 
-Here follows an in-depth presentation of the project.
-
 ## The Kohoen Network
 
 The projects aims to implement an interactive **Kohoen Network**, a type of **SOM** ([Self Organizing Map](https://en.wikipedia.org/wiki/Self-organizing_map)). Through the GUI the user can insert data, and visualize the network as it learns.  
