@@ -1,13 +1,19 @@
-# Kohonen-Network
+# Project presentation
+
+Here follows an in-depth presentation of the project.
+
+## The Kohoen Network
 
 The projects aims to implement an interactive **Kohoen Network**, a type of **SOM** ([Self Organizing Map](https://en.wikipedia.org/wiki/Self-organizing_map)). Through the GUI the user can insert data, and visualize the network as it learns.  
 Kohoen Networks are usually used to perform dimensionality reduction and normalization on data. In this project, the network maps a 2D input on a grid topology of nodes (therefore, it performs no dimensionality reduction, just data normalization).
 
-User draws data distribution (purple dots):  
-<img src="img/img_before.png" width="75%" height="75%">
+[**Follow this link**](https://youtu.be/hWig_1mXETk) to watch the presentation (in italian) of the application.
+
+User draws data distribution (red dots):  
+<img src="img/KN_neurons.png" width="75%" height="75%">
 
 After training:  
-<img src="img/img_after.png" width="75%" height="75%">
+<img src="img/KN_neurons_tr.png" width="75%" height="75%">
 
 
 ## Implementation details
@@ -15,8 +21,22 @@ After training:
 + Everything has been implemented from scratch by me, with the only exception of graphics libraries (Allegro).
 + Everything has been implemented in C.
 
-## Files and Folders
+### Code structure
 
++ The code in `src/kohoen_network.c` implements the Kohoen Network functionality. Some settings are configured in the `cong/KN_settings.h` configuration file. See the following sub-section for an explanation of some constants.
++ The code in `src/main` implements the application (GUI functionality) using the `Allegro` library. Some settings are configured in the `cong/display_settings.h` configuration file.
+
+### KN configuration
+Following is an explanation of the constants that can be set in the configuration file `cong/KN_settings.h`, regarding the functioning of the Kohoen Network:
+
+**MAP_SIZE** -> determines the size of the network (*n. of units = MAP_SIZE^2*).  
+**LEARN_DECAY** -> learning decay factor for the KN (determines how fast the network stabilizes).  
+**RADIUS_DECAY** -> radius decay factor for the KN (determines how fast each neuron becomes insensible to its neighbours' updates).  
+**MAX_RADIUS** -> max (starting) radius value.  
+**MIN_RADIUS** -> min (final) radius value.  
+**WEIGHT_DISTRIBUTION** -> determines the starting distrubition of the weights. If set to `1`, the weights will be initialized equally spaced across the map (creating a grid pattern). If set to `0`, each weight will be initialized at random across the map.  
+
+### Files & directories
 **bin** -> contains the executable binaries after building  
 **build** -> contains the .o object files generated during the compilation  
 **conf** -> contains the configuration .h files  
