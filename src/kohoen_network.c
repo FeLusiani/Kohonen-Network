@@ -17,7 +17,7 @@ struct out_unit {
 };
 
 static out_unit map[MAP_SIZE][MAP_SIZE];
-static float** ts; // training examples [n_examples][input_dim]
+static float** ts = NULL; // training examples [n_examples][input_dim]
 static float* ki; // input vector [input_dim]
 static int input_dim; // number of input units
 // static out_unit** map; // vector 2D of out_units
@@ -91,6 +91,10 @@ float *get_example(int k){
     return ts[k];
 }
 
+int get_n_examples(){
+    return nex;
+}
+
 float get_input(int i){
     return ki[i];
 }
@@ -109,7 +113,10 @@ void set_example(int k, float* v){
 void delete_ts(){
 	for (int i=0; i<nex; i++)
 		free(ts[i]);
-	free(ts);
+    if (ts != NULL){
+	    free(ts);
+        ts = NULL;
+    }
 	nex = 0;
 }
 

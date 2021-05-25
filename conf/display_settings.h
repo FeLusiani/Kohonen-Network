@@ -5,6 +5,7 @@
 #define color_text2 al_map_rgb(97, 175, 239) // blue
 #define color_text3 al_map_rgb(209, 154, 102) // orange
 #define color_black al_map_rgb(0, 0, 0) // black
+#define color_red al_map_rgb(255, 0, 0) // red
 #define font_size 20
 #define disp_w 1000
 #define disp_h 700
