@@ -19,7 +19,7 @@ Kohoen Networks are usually used to perform dimensionality reduction and normali
 ### KN configuration
 Following is an explanation of the constants that can be set in the configuration file `cong/KN_settings.h`, regarding the functioning of the Kohoen Network:
 
-**MAP_SIZE** -> size (in pixels) of the map on which the user can draw data-points and visualize the network weights.  
+**MAP_SIZE** -> determines the size of the network (*n. of units = MAP_SIZE^2*).  
 **LEARN_DECAY** -> learning decay factor for the KN (determines how fast the network stabilizes).  
 **RADIUS_DECAY** -> radius decay factor for the KN (determines how fast each neuron becomes insensible to its neighbours' updates).  
 **MAX_RADIUS** -> max (starting) radius value.  
